@@ -124,27 +124,24 @@
             input.value = value;
         }
 
-        // Función para validar el año
-        function validateYear(input) {
+        // Función para validar el año y el mes
+        function validateYearAndMonth() {
             const currentYear = new Date().getFullYear();
-            if (input.value < currentYear) {
-                input.setCustomValidity(`El año no puede ser menor que ${currentYear}`);
-            } else {
-                input.setCustomValidity("");
-            }
-        }
-
-        // Función para validar el mes
-        function validateMonth() {
             const currentMonth = new Date().getMonth() + 1; // Mes actual (1-12)
-            const selectedMonth = parseInt(document.getElementById('mesPago').value);
             const yearInput = document.getElementById('año').value;
-            const currentYear = new Date().getFullYear();
+            const selectedMonth = parseInt(document.getElementById('mesPago').value);
 
             // Si el año es el actual, no permitir seleccionar un mes anterior al mes actual
             if (yearInput == currentYear && selectedMonth < currentMonth) {
                 alert(`No puedes seleccionar un mes anterior al mes actual (${currentMonth}).`);
-                document.getElementById('mesPago').value = currentMonth; // Reseteamos el mes al actual
+                document.getElementById('mesPago').value = currentMonth; 
+            }
+            
+            // Si el año es menor al actual, no permitir seleccionar un mes posterior a diciembre
+            if (yearInput < currentYear) {
+                alert("No puedes seleccionar un año anterior al año actual.");
+                document.getElementById('año').value = currentYear; 
+                document.getElementById('mesPago').value = 1; 
             }
         }
 
