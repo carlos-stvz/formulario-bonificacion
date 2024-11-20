@@ -130,6 +130,7 @@
             if (input.value < currentYear) {
                 input.setCustomValidity(`El año no puede ser menor que ${currentYear}`);
             } else {
+                validateMonth();
                 input.setCustomValidity("");
             }
         }
