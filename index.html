@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulario de Bonificación</title>
+    <title>Cargar Archivo CSV</title>
     <style>
-        
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -19,25 +18,24 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            position: relative; 
+            position: relative;
         }
         h2 {
             text-align: center;
             color: #554FE0;
         }
-   
         .logo {
             position: absolute;
             top: 20px;
             left: 20px;
-            width: 100px; 
+            width: 100px;
         }
         label {
             display: block;
             margin: 10px 0 5px;
             font-weight: bold;
         }
-        input, select, textarea {
+        input[type="file"] {
             width: 100%;
             padding: 8px;
             margin-bottom: 15px;
@@ -65,119 +63,65 @@
 
     <div class="container">
         <img src="https://alternova.com/wp-content/uploads/2024/02/logo1-2048x511.webp" alt="Logo" class="logo">
+        
+        <h2>Cargar Archivo CSV</h2>
 
-        <h2>Formulario de Bonificación</h2>
-
-        <form id="formBonificacion">
-            <!-- Nombre Completo -->
-            <label for="nombreCompleto">Nombre completo:</label>
-            <input type="text" id="nombreCompleto" name="nombreCompleto" required>
-
-            <!-- Tipo Bonificación -->
-            <label for="tipoBonificacion">Tipo de bonificación:</label>
-            <select id="tipoBonificacion" name="tipoBonificacion" required>
-                <option value="Prestacional">Prestacional</option>
-                <option value="No Prestacional">No prestacional</option>
-            </select>
-
-            <!-- Valor Bonificación con separador de miles -->
-            <label for="valorBonificacion">Valor de bonificación:</label>
-            <input type="text" id="valorBonificacion" name="valorBonificacion" required oninput="formatNumber(this)" placeholder="Escribe el valor">
-
-            <!-- Mes de Pago -->
-            <label for="mesPago">Mes de pago:</label>
-            <select id="mesPago" name="mesPago" required onchange="validateMonth()">
-                <option value="1">Enero</option>
-                <option value="2">Febrero</option>
-                <option value="3">Marzo</option>
-                <option value="4">Abril</option>
-                <option value="5">Mayo</option>
-                <option value="6">Junio</option>
-                <option value="7">Julio</option>
-                <option value="8">Agosto</option>
-                <option value="9">Septiembre</option>
-                <option value="10">Octubre</option>
-                <option value="11">Noviembre</option>
-                <option value="12">Diciembre</option>
-            </select>
-
-            <!-- Año -->
-            <label for="año">Año:</label>
-            <input type="number" id="año" name="año" required oninput="validateYear(this)" placeholder="Escribe el año">
-
-            <!-- Justificación -->
-            <label for="justificacion">Justificación:</label>
-            <textarea id="justificacion" name="justificacion" rows="4" required></textarea>
-
-            <!-- Botón de envío -->
-            <button type="submit" class="button">Enviar</button>
+        <form id="formCSV" enctype="multipart/form-data">
+            <!-- Cargar archivo CSV -->
+            <label for="csv-file">Selecciona un archivo CSV:</label>
+            <input type="file" id="csv-file" name="csv-file" accept=".csv" required>
+            
+            <!-- Botón de carga -->
+            <button type="submit" class="button">Subir archivo CSV</button>
         </form>
     </div>
 
     <script>
-        // Función para formatear el valor con separador de miles
-        function formatNumber(input) {
-            let value = input.value.replace(/\D/g, ''); 
-            if (value.length > 0) {
-                value = Number(value).toLocaleString(); 
-            }
-            input.value = value;
-        }
-
-        // Función para validar el año
-        function validateYear(input) {
-            const currentYear = new Date().getFullYear();
-            if (input.value < currentYear) {
-                input.setCustomValidity(`El año no puede ser menor que ${currentYear}`);
-            } else {
-                validateMonth();
-                input.setCustomValidity("");
-            }
-        }
-
-        // Función para validar el mes
-        function validateMonth() {
-            const currentMonth = new Date().getMonth() + 1; // Mes actual (1-12)
-            const selectedMonth = parseInt(document.getElementById('mesPago').value);
-            const yearInput = document.getElementById('año').value;
-            const currentYear = new Date().getFullYear();
-
-            // Si el año es el actual, no permitir seleccionar un mes anterior al mes actual
-            if (yearInput == currentYear && selectedMonth < currentMonth) {
-                alert(`No puedes seleccionar un mes anterior al mes actual (${currentMonth}).`);
-                document.getElementById('mesPago').value = currentMonth; // Reseteamos el mes al actual
-            }
-        }
-
         // Captura del formulario y envío de datos al Webhook de n8n
-        document.getElementById('formBonificacion').addEventListener('submit', function(event) {
+        document.getElementById('formCSV').addEventListener('submit', function(event) {
             event.preventDefault(); // Evitar envío por defecto del formulario
 
             const formData = new FormData(event.target);
-            const data = {};
-            formData.forEach((value, key) => {
-                data[key] = value;
-            });
+            
+            // Verificar si el archivo CSV está presente
+            const csvFile = formData.get('csv-file');
+            if (!csvFile) {
+                alert('Por favor, selecciona un archivo CSV.');
+                return;
+            }
 
-            // Enviar los datos al Webhook de n8n
-            fetch('https://alternova.app.n8n.cloud/webhook-test/webhook-data', { // Sustituye con tu URL de Webhook
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data), // Datos enviados como JSON
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert('Formulario enviado correctamente');
-                document.getElementById('formBonificacion').reset();
-            })
-            .catch((error) => {
-                console.error('Error al enviar los datos:', error);
-                alert('Hubo un error al enviar el formulario');
-            });
+            // Preparar el archivo CSV para ser enviado
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csvData = e.target.result;
+
+                // Enviar el archivo CSV al Webhook de n8n
+                fetch('https://alternova.app.n8n.cloud/webhook-test/webhook-data', { // Sustituye con tu URL de Webhook
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fileName: csvFile.name,
+                        fileData: csvData // El contenido del CSV
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Archivo CSV enviado correctamente');
+                    document.getElementById('formCSV').reset();
+                })
+                .catch((error) => {
+                    console.error('Error al enviar el archivo:', error);
+                    alert('Hubo un error al enviar el archivo');
+                });
+            };
+            
+            // Leer el archivo como texto
+            reader.readAsText(csvFile);
         });
     </script>
 
 </body>
 </html>
+
